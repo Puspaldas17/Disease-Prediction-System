@@ -1,6 +1,30 @@
 /* ── Google Fonts ── */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+/* ── Shimmer keyframe ── */
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+@keyframes orb-float {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33%     { transform: translate(40px,-60px) scale(1.1); }
+  66%     { transform: translate(-30px,40px) scale(0.95); }
+}
+@keyframes border-glow {
+  0%,100% { opacity:.4; }
+  50%     { opacity:1; }
+}
+@keyframes result-in {
+  from { opacity:0; transform:translateY(24px) scale(0.97); filter:blur(4px); }
+  to   { opacity:1; transform:translateY(0)   scale(1);    filter:blur(0); }
+}
+@keyframes badge-pop {
+  0%   { transform:scale(0.8); opacity:0; }
+  60%  { transform:scale(1.1); }
+  100% { transform:scale(1);   opacity:1; }
+}
+
 /* ── CSS Variables ── */
 :root {
     --bg-deep:      #060b18;
@@ -252,18 +276,30 @@ body::before {
 
 /* ── Glass Card ── */
 .glass-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.035);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.07);
     border-radius: var(--radius-lg);
     padding: 36px;
-    box-shadow: var(--shadow-card);
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 32px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.08);
     position: relative;
     overflow: hidden;
-    transition: border-color var(--transition), box-shadow var(--transition);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
-.glass-card:hover { border-color: rgba(255,255,255,0.12); }
+.glass-card::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    border-radius:inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 50%);
+    pointer-events:none;
+}
+.glass-card:hover {
+    border-color: rgba(99,102,241,0.25);
+    box-shadow: 0 0 0 1px rgba(99,102,241,0.15), 0 40px 80px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 40px rgba(99,102,241,0.08);
+    transform: translateY(-2px);
+}
 
 /* ────────────────────────────────────────────
    FORM CARD
@@ -342,23 +378,28 @@ label {
     width: 100%;
     padding: 12px 44px 12px 16px;
     background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.08);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font-family: 'Inter', sans-serif;
     font-size: 0.92rem;
     cursor: pointer;
     appearance: none;
-    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s, transform 0.15s;
     outline: none;
+}
+.symptom-select:hover:not(:focus) {
+    border-color: rgba(255,255,255,0.16);
+    background: rgba(255,255,255,0.06);
+    transform: translateY(-1px);
 }
 .symptom-select:focus {
     border-color: var(--indigo);
-    background: rgba(99,102,241,0.06);
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    background: rgba(99,102,241,0.08);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.18), 0 0 20px rgba(99,102,241,0.1);
+    transform: translateY(-1px);
 }
-.symptom-select:hover:not(:focus) { border-color: rgba(255,255,255,0.18); }
-.symptom-select option { background: #1a2035; color: var(--text-primary); }
+.symptom-select option { background: #111827; color: var(--text-primary); }
 .select-arrow {
     position: absolute;
     right: 14px;
@@ -374,18 +415,22 @@ label {
 /* ── Progress ── */
 .progress-section { margin-bottom: 24px; }
 .progress-track {
-    height: 4px;
-    background: rgba(255,255,255,0.07);
+    height: 5px;
+    background: rgba(255,255,255,0.06);
     border-radius: 99px;
     overflow: hidden;
     margin-bottom: 10px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
 }
 .progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--indigo), var(--cyan));
+    background: linear-gradient(90deg, var(--indigo), var(--cyan), var(--indigo));
+    background-size: 200% 100%;
     border-radius: 99px;
     width: 0%;
-    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    transition: width 0.45s cubic-bezier(0.4,0,0.2,1);
+    animation: shimmer 2s linear infinite;
+    box-shadow: 0 0 8px rgba(99,102,241,0.6);
 }
 .progress-label { font-size: 0.8rem; color: var(--text-muted); }
 
@@ -394,8 +439,9 @@ label {
     position: relative;
     width: 100%;
     padding: 16px 24px;
-    background: linear-gradient(135deg, var(--indigo) 0%, #4f46e5 50%, var(--cyan) 100%);
-    background-size: 200% 200%;
+    background: linear-gradient(90deg, var(--indigo), #4f46e5, var(--cyan), var(--indigo));
+    background-size: 300% 100%;
+    animation: shimmer 4s linear infinite;
     color: #fff;
     border: none;
     border-radius: var(--radius-md);
@@ -408,26 +454,33 @@ label {
     justify-content: center;
     gap: 10px;
     letter-spacing: 0.3px;
-    transition: transform 0.15s ease, box-shadow 0.2s ease, background-position 0.4s ease;
-    box-shadow: 0 4px 20px rgba(99,102,241,0.35);
+    transition: transform 0.2s ease, box-shadow 0.25s ease;
+    box-shadow: 0 4px 24px rgba(99,102,241,0.4);
     overflow: hidden;
 }
 .btn-analyze:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(99,102,241,0.5);
-    background-position: right center;
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 10px 40px rgba(99,102,241,0.6), 0 0 60px rgba(99,102,241,0.12);
 }
-.btn-analyze:active { transform: translateY(0); box-shadow: 0 2px 10px rgba(99,102,241,0.3); }
-.btn-analyze.loading { opacity: 0.8; cursor: not-allowed; pointer-events: none; }
+.btn-analyze:hover::after {
+    content:'';
+    position:absolute;
+    top:0; left:-80%;
+    width:60%; height:100%;
+    background: linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+    transform:skewX(-20deg);
+    animation: btn-sweep 0.55s ease forwards;
+}
+@keyframes btn-sweep { to { left:130%; } }
+.btn-analyze:active { transform: translateY(0) scale(0.99); box-shadow: 0 2px 12px rgba(99,102,241,0.35); }
+.btn-analyze.loading { opacity: 0.82; cursor: not-allowed; pointer-events: none; }
 .btn-glow {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 60%);
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 55%);
     pointer-events: none;
 }
 .btn-spinner { display: none; animation: spin 0.8s linear infinite; }
 .btn-analyze.loading .btn-spinner { display: inline-flex; }
-.btn-analyze.loading .btn-text::after { content: ''; }
 
 /* ── Alert ── */
 .alert {
@@ -464,8 +517,9 @@ label {
    RESULT CARD
 ──────────────────────────────────────────── */
 .result-card {
-    border-color: rgba(16,185,129,0.2);
-    animation: slideUp 0.5s cubic-bezier(0.4,0,0.2,1);
+    border-color: rgba(16,185,129,0.25);
+    animation: result-in 0.55s cubic-bezier(0.22,1,0.36,1) forwards;
+    box-shadow: 0 0 0 1px rgba(16,185,129,0.12), 0 32px 64px rgba(0,0,0,0.45), 0 0 80px rgba(16,185,129,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 .result-glow {
     position: absolute;
