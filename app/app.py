@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
 import pandas as pd
 import sys
 import os
@@ -11,8 +11,11 @@ from src.predict import predict_disease
 
 app = Flask(__name__)
 
+# Secret key required for session — reads from env var in production
+app.secret_key = os.environ.get('SECRET_KEY', 'medipredict-dev-secret-key')
+
 # ------------------------------------------------------------------ #
-# FIX 1: Shared normalization helper — matches preprocess.py exactly  #
+# Shared normalization helper — matches preprocess.py exactly         #
 # ------------------------------------------------------------------ #
 def clean_symptom(text):
     """Strip whitespace and replace spaces with underscores."""
@@ -20,18 +23,15 @@ def clean_symptom(text):
         return text.strip().replace(' ', '_')
     return text
 
-# Load & normalize symptom severity data
+# Load & normalize symptom severity data (once at startup)
 csv_path = os.path.join(BASE_DIR, 'data', 'Symptom-severity.csv')
 severity_df = pd.read_csv(csv_path)
-severity_df['Symptom'] = severity_df['Symptom'].apply(clean_symptom)  # FIX 1 applied
+severity_df['Symptom'] = severity_df['Symptom'].apply(clean_symptom)
 symptoms_list = severity_df['Symptom'].tolist()
 
-# ------------------------------------------------------------------ #
-# FIX 2: Load disease descriptions (was loaded but never used before) #
-# ------------------------------------------------------------------ #
+# Load disease descriptions (once at startup)
 desc_path = os.path.join(BASE_DIR, 'data', 'symptom_Description.csv')
 desc_df = pd.read_csv(desc_path)
-# Normalize disease keys: lowercase + underscores so they match model output
 description_dict = {
     row['Disease'].strip().replace(' ', '_'): row['Description'].strip()
     for _, row in desc_df.iterrows()
@@ -40,74 +40,71 @@ description_dict = {
 
 @app.route('/')
 def home():
-    return render_template('index.html', symptoms=symptoms_list)
+    # Pop result from session — consumed once, gone on refresh
+    prediction         = session.pop('prediction', None)
+    disease_description = session.pop('disease_description', None)
+    error_text         = session.pop('error_text', None)
+    user_choices       = session.pop('user_choices', None)
+
+    return render_template(
+        'index.html',
+        symptoms=symptoms_list,
+        prediction=prediction,
+        disease_description=disease_description,
+        error_text=error_text,
+        user_choices=user_choices
+    )
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if request.method == 'POST':
+    # Read dropdown selections
+    user_choices = {
+        1: request.form.get('symptom1', ''),
+        2: request.form.get('symptom2', ''),
+        3: request.form.get('symptom3', ''),
+        4: request.form.get('symptom4', ''),
+        5: request.form.get('symptom5', '')
+    }
 
-        # Save dropdown selections to repopulate form after submit
-        user_choices = {
-            1: request.form.get('symptom1', ''),
-            2: request.form.get('symptom2', ''),
-            3: request.form.get('symptom3', ''),
-            4: request.form.get('symptom4', ''),
-            5: request.form.get('symptom5', '')
-        }
+    selected_symptoms = [val for val in user_choices.values() if val != '']
 
-        selected_symptoms = [val for val in user_choices.values() if val != ""]
+    # Validate — reject empty submissions
+    if not selected_symptoms:
+        session['error_text']   = 'Please select at least one symptom before analyzing.'
+        session['user_choices'] = user_choices
+        return redirect(url_for('home'))
 
-        # ---------------------------------------------------------- #
-        # FIX 3: Input validation — reject zero-symptom submissions   #
-        # ---------------------------------------------------------- #
-        if not selected_symptoms:
-            return render_template(
-                'index.html',
-                symptoms=symptoms_list,
-                error_text="Please select at least one symptom before analyzing.",
-                user_choices=user_choices
-            )
+    # Convert symptoms → severity weights
+    severity_dict = dict(zip(severity_df['Symptom'], severity_df['weight']))
+    symptom_weights = []
+    for sym in selected_symptoms:
+        normalized = clean_symptom(sym)
+        if normalized in severity_dict:
+            symptom_weights.append(severity_dict[normalized])
 
-        # Build severity lookup from already-normalized dataframe
-        severity_dict = dict(zip(severity_df['Symptom'], severity_df['weight']))
+    if not symptom_weights:
+        session['error_text']   = 'None of the selected symptoms could be matched. Please try different symptoms.'
+        session['user_choices'] = user_choices
+        return redirect(url_for('home'))
 
-        # Map selected symptoms to weights; skip any that don't match (with warning)
-        symptom_weights = []
-        unmatched = []
-        for sym in selected_symptoms:
-            normalized = clean_symptom(sym)  # FIX 1: normalize before lookup
-            if normalized in severity_dict:
-                symptom_weights.append(severity_dict[normalized])
-            else:
-                unmatched.append(sym)
+    # Run prediction
+    model_file = os.path.join(BASE_DIR, 'models', 'random_forest_model.pkl')
+    prediction = predict_disease(symptom_weights, model_path=model_file)
 
-        if not symptom_weights:
-            return render_template(
-                'index.html',
-                symptoms=symptoms_list,
-                error_text="None of the selected symptoms could be matched. Please try different symptoms.",
-                user_choices=user_choices
-            )
+    # Lookup disease description
+    normalized_prediction = str(prediction).strip().replace(' ', '_')
+    disease_description = description_dict.get(
+        normalized_prediction,
+        'No description is available for this condition.'
+    )
 
-        model_file = os.path.join(BASE_DIR, 'models', 'random_forest_model.pkl')
-        prediction = predict_disease(symptom_weights, model_path=model_file)
-
-        # FIX 2: Retrieve disease description for the predicted disease
-        # Normalize prediction (model may return spaces or underscores) before lookup
-        normalized_prediction = str(prediction).strip().replace(' ', '_')
-        disease_description = description_dict.get(
-            normalized_prediction,
-            "No description is available for this condition."
-        )
-
-        return render_template(
-            'index.html',
-            symptoms=symptoms_list,
-            prediction=prediction,
-            disease_description=disease_description,
-            user_choices=user_choices
-        )
+    # Store result in session, then redirect to GET /
+    # → refreshing the result page will show a clean form (PRG pattern)
+    session['prediction']          = str(prediction)
+    session['disease_description'] = disease_description
+    session['user_choices']        = user_choices
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
