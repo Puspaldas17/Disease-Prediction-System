@@ -58,13 +58,13 @@ def home():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Read dropdown selections
+    # Read dropdown selections — string keys so session JSON round-trip is lossless
     user_choices = {
-        1: request.form.get('symptom1', ''),
-        2: request.form.get('symptom2', ''),
-        3: request.form.get('symptom3', ''),
-        4: request.form.get('symptom4', ''),
-        5: request.form.get('symptom5', '')
+        '1': request.form.get('symptom1', ''),
+        '2': request.form.get('symptom2', ''),
+        '3': request.form.get('symptom3', ''),
+        '4': request.form.get('symptom4', ''),
+        '5': request.form.get('symptom5', '')
     }
 
     selected_symptoms = [val for val in user_choices.values() if val != '']
