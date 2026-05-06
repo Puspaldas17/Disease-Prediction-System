@@ -132,7 +132,7 @@
                             <select name="symptom{{ i }}" id="symptom{{ i }}" class="symptom-select">
                                 <option value="">— Select a symptom —</option>
                                 {% for sym in symptoms %}
-                                <option value="{{ sym }}" {% if user_choices and user_choices[i] == sym %}selected{% endif %}>
+                                <option value="{{ sym }}" {% if user_choices and user_choices.get(i|string) == sym %}selected{% endif %}>
                                     {{ sym.replace('_', ' ').title() }}
                                 </option>
                                 {% endfor %}
@@ -370,18 +370,18 @@
         p.style.cssText = `left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s`;
     });
 
-    /* ── Reset all dropdowns on every fresh page load (incl. back/fwd cache) ── */
+    /* ── Reset dropdowns on back/fwd cache nav (only if no result showing) ── */
     window.addEventListener('pageshow', function (e) {
-        // persisted = page came from bfcache (back button); always reset
-        if (e.persisted || window.performance?.navigation?.type === 2) {
+        const hasResult = !!document.getElementById('result-section');
+        if (e.persisted && !hasResult) {
             selects.forEach(s => { s.selectedIndex = 0; });
             updateCounter();
         }
     });
 
-    /* ── Also reset immediately if no server-side result is present ── */
-    const hasResult  = !!document.getElementById('result-section');
-    const hasError   = !!document.getElementById('error-alert');
+    /* ── Reset immediately only on a clean page (no result, no error) ── */
+    const hasResult = !!document.getElementById('result-section');
+    const hasError  = !!document.getElementById('error-alert');
     if (!hasResult && !hasError) {
         selects.forEach(s => { s.selectedIndex = 0; });
         updateCounter();
