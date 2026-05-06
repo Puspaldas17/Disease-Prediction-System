@@ -132,9 +132,7 @@
                             <select name="symptom{{ i }}" id="symptom{{ i }}" class="symptom-select">
                                 <option value="">— Select a symptom —</option>
                                 {% for sym in symptoms %}
-                                <option value="{{ sym }}" {% if user_choices and user_choices.get(i|string) == sym %}selected{% endif %}>
-                                    {{ sym.replace('_', ' ').title() }}
-                                </option>
+                                <option value="{{ sym }}">{{ sym.replace('_', ' ').title() }}</option>
                                 {% endfor %}
                             </select>
                             <span class="select-arrow" aria-hidden="true">
@@ -314,7 +312,17 @@
     }
 
     selects.forEach(s => s.addEventListener('change', updateCounter));
-    updateCounter(); // init
+
+    /* ── Restore previously selected symptoms injected from server ── */
+    // prevChoices = {} when session is empty (fresh page / after refresh)
+    // prevChoices = {"1":"itching","2":"skin_rash",...} after analyze
+    const prevChoices = {{ (user_choices or {})|tojson }};
+    Object.entries(prevChoices).forEach(([key, val]) => {
+        if (!val) return;
+        const sel = document.getElementById('symptom' + key);
+        if (sel) sel.value = val;
+    });
+    updateCounter(); // reflect restored values in counter
 
     /* ── Spinning loader on submit ── */
     const form = document.getElementById('symptom-form');
@@ -337,10 +345,8 @@
     /* ── Animate confidence bar on result load ── */
     const confidenceFill = document.getElementById('confidence-fill');
     if (confidenceFill) {
-        const targetWidth = Math.floor(Math.random() * 8) + 91; // 91–98%
-        setTimeout(() => {
-            confidenceFill.style.width = targetWidth + '%';
-        }, 400);
+        const targetWidth = Math.floor(Math.random() * 8) + 91;
+        setTimeout(() => { confidenceFill.style.width = targetWidth + '%'; }, 400);
     }
 
     /* ── Scroll result into view ── */
@@ -361,7 +367,7 @@
 
     /* ── Particle drift animation ── */
     const particles = document.querySelectorAll('.particle');
-    particles.forEach((p, i) => {
+    particles.forEach((p) => {
         const x = Math.random() * 100;
         const y = Math.random() * 100;
         const size = Math.random() * 4 + 2;
@@ -370,22 +376,13 @@
         p.style.cssText = `left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s`;
     });
 
-    /* ── Reset dropdowns on back/fwd cache nav (only if no result showing) ── */
+    /* ── On back/fwd cache: clear everything (no result on bfcache pages) ── */
     window.addEventListener('pageshow', function (e) {
-        const hasResult = !!document.getElementById('result-section');
-        if (e.persisted && !hasResult) {
+        if (e.persisted) {
             selects.forEach(s => { s.selectedIndex = 0; });
             updateCounter();
         }
     });
-
-    /* ── Reset immediately only on a clean page (no result, no error) ── */
-    const hasResult = !!document.getElementById('result-section');
-    const hasError  = !!document.getElementById('error-alert');
-    if (!hasResult && !hasError) {
-        selects.forEach(s => { s.selectedIndex = 0; });
-        updateCounter();
-    }
 
 })();
 </script>
