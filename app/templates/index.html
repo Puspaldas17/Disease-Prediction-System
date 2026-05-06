@@ -119,7 +119,7 @@
                 </div>
             </div>
 
-            <form action="/predict" method="POST" id="symptom-form" novalidate>
+            <form action="/predict" method="POST" id="symptom-form" novalidate autocomplete="off">
                 <div class="symptoms-grid" role="group" aria-label="Symptom dropdowns">
                     {% for i in range(1, 6) %}
                     <div class="form-group" id="group-{{ i }}">
@@ -369,6 +369,23 @@
         const delay = Math.random() * -20;
         p.style.cssText = `left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s`;
     });
+
+    /* ── Reset all dropdowns on every fresh page load (incl. back/fwd cache) ── */
+    window.addEventListener('pageshow', function (e) {
+        // persisted = page came from bfcache (back button); always reset
+        if (e.persisted || window.performance?.navigation?.type === 2) {
+            selects.forEach(s => { s.selectedIndex = 0; });
+            updateCounter();
+        }
+    });
+
+    /* ── Also reset immediately if no server-side result is present ── */
+    const hasResult  = !!document.getElementById('result-section');
+    const hasError   = !!document.getElementById('error-alert');
+    if (!hasResult && !hasError) {
+        selects.forEach(s => { s.selectedIndex = 0; });
+        updateCounter();
+    }
 
 })();
 </script>
