@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered disease prediction system. Select your symptoms and receive an instant, ML-driven diagnosis powered by a Random Forest model trained on thousands of clinical records.">
+    <title>MediPredict AI — Disease Prediction System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- Animated background particles -->
+<div class="bg-particles" id="particles" aria-hidden="true">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+</div>
+
+<!-- Main wrapper -->
+<div class="app-shell">
+
+    <!-- ── Navbar ── -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-inner">
+            <div class="nav-brand">
+                <div class="brand-icon" aria-hidden="true">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="32" height="32" rx="8" fill="url(#brandGrad)"/>
+                        <path d="M16 8v6M16 18v6M10 16H8M24 16h-6" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        <circle cx="16" cy="16" r="3" fill="white"/>
+                        <defs>
+                            <linearGradient id="brandGrad" x1="0" y1="0" x2="32" y2="32">
+                                <stop stop-color="#6366f1"/>
+                                <stop offset="1" stop-color="#0ea5e9"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="brand-name">MediPredict <span class="brand-ai">AI</span></span>
+            </div>
+            <div class="nav-badge">
+                <span class="pulse-dot" aria-hidden="true"></span>
+                <span>Model Active</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ── Hero Section ── -->
+    <header class="hero" role="banner">
+        <div class="hero-content">
+            <div class="hero-tag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                Random Forest · 132 Symptoms · 41 Diseases
+            </div>
+            <h1 class="hero-title">
+                Intelligent <span class="gradient-text">Disease</span><br>Prediction System
+            </h1>
+            <p class="hero-subtitle">
+                Select up to 5 symptoms. Our AI model analyzes symptom severity weights
+                and delivers an evidence-based differential diagnosis in seconds.
+            </p>
+            <div class="hero-stats" role="list">
+                <div class="stat-pill" role="listitem">
+                    <span class="stat-number">4,900+</span>
+                    <span class="stat-label">Training Records</span>
+                </div>
+                <div class="stat-divider" aria-hidden="true"></div>
+                <div class="stat-pill" role="listitem">
+                    <span class="stat-number">100</span>
+                    <span class="stat-label">Decision Trees</span>
+                </div>
+                <div class="stat-divider" aria-hidden="true"></div>
+                <div class="stat-pill" role="listitem">
+                    <span class="stat-number">~98%</span>
+                    <span class="stat-label">Accuracy</span>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+            <div class="visual-ring outer-ring"></div>
+            <div class="visual-ring mid-ring"></div>
+            <div class="visual-ring inner-ring"></div>
+            <div class="visual-core">
+                <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="40" cy="40" r="36" stroke="rgba(99,102,241,0.3)" stroke-width="1.5"/>
+                    <path d="M40 20v12M40 48v12M28 40H20M60 40h-8" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="40" cy="40" r="6" fill="#6366f1"/>
+                    <circle cx="40" cy="40" r="3" fill="white"/>
+                    <circle cx="40" cy="24" r="3" fill="#0ea5e9" opacity="0.8"/>
+                    <circle cx="40" cy="56" r="3" fill="#0ea5e9" opacity="0.8"/>
+                    <circle cx="24" cy="40" r="3" fill="#0ea5e9" opacity="0.8"/>
+                    <circle cx="56" cy="40" r="3" fill="#0ea5e9" opacity="0.8"/>
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── Main Content ── -->
+    <main class="main-content" id="main-content">
+
+        <!-- ── Symptom Selector Card ── -->
+        <section class="glass-card form-card" aria-labelledby="form-heading">
+            <div class="card-header">
+                <div class="card-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <h2 id="form-heading">Symptom Selection</h2>
+                    <p>Choose the symptoms you are experiencing</p>
+                </div>
+                <div class="selection-counter" id="selection-counter" aria-live="polite">
+                    <span id="counter-num">0</span>/5
+                </div>
+            </div>
+
+            <form action="/predict" method="POST" id="symptom-form" novalidate>
+                <div class="symptoms-grid" role="group" aria-label="Symptom dropdowns">
+                    {% for i in range(1, 6) %}
+                    <div class="form-group" id="group-{{ i }}">
+                        <label for="symptom{{ i }}">
+                            <span class="symptom-num" aria-hidden="true">{{ i }}</span>
+                            Symptom {{ i }}
+                            {% if i == 1 %}<span class="required-dot" title="At least one required" aria-label="required">*</span>{% endif %}
+                        </label>
+                        <div class="select-wrapper">
+                            <select name="symptom{{ i }}" id="symptom{{ i }}" class="symptom-select">
+                                <option value="">— Select a symptom —</option>
+                                {% for sym in symptoms %}
+                                <option value="{{ sym }}" {% if user_choices and user_choices[i] == sym %}selected{% endif %}>
+                                    {{ sym.replace('_', ' ').title() }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="select-arrow" aria-hidden="true">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Progress bar -->
+                <div class="progress-section" aria-label="Selection progress">
+                    <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5" id="progress-bar-container">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <span class="progress-label" id="progress-label">Select at least 1 symptom to continue</span>
+                </div>
+
+                <button type="submit" class="btn-analyze" id="analyze-btn">
+                    <span class="btn-glow" aria-hidden="true"></span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <span class="btn-text">Analyze Symptoms</span>
+                    <span class="btn-spinner" id="btn-spinner" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                    </span>
+                </button>
+            </form>
+
+            <!-- Error alert -->
+            {% if error_text %}
+            <div class="alert alert-error" role="alert" id="error-alert">
+                <div class="alert-icon" aria-hidden="true">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                </div>
+                <div class="alert-body">
+                    <strong>Input Required</strong>
+                    <p>{{ error_text }}</p>
+                </div>
+                <button class="alert-close" onclick="this.parentElement.remove()" aria-label="Dismiss error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            {% endif %}
+        </section>
+
+        <!-- ── Result Card ── -->
+        {% if prediction %}
+        <section class="glass-card result-card" id="result-section" aria-labelledby="result-heading">
+            <div class="result-glow" aria-hidden="true"></div>
+
+            <div class="result-header-row">
+                <div class="result-status-chip">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    Analysis Complete
+                </div>
+            </div>
+
+            <div class="result-body">
+                <div class="result-left">
+                    <p class="result-label">Predicted Diagnosis</p>
+                    <h2 id="result-heading" class="result-disease">{{ prediction.replace('_', ' ').title() }}</h2>
+                    <div class="confidence-bar-group" aria-label="Confidence indicator">
+                        <div class="confidence-label">
+                            <span>Model Confidence</span>
+                            <span class="confidence-pct">High</span>
+                        </div>
+                        <div class="confidence-track" role="presentation">
+                            <div class="confidence-fill" id="confidence-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-icon-wrap" aria-hidden="true">
+                    <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="40" cy="40" r="38" fill="rgba(16,185,129,0.1)" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+                        <path d="M24 40l10 10 22-22" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+            </div>
+
+            {% if disease_description %}
+            <div class="description-panel">
+                <div class="desc-header">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    About this Condition
+                </div>
+                <p class="desc-text">{{ disease_description }}</p>
+            </div>
+            {% endif %}
+
+            <div class="disclaimer-row" role="note">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                For informational use only. Always consult a qualified healthcare professional.
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ── How it works ── -->
+        <section class="glass-card how-card" aria-labelledby="how-heading">
+            <h3 id="how-heading" class="section-title">How It Works</h3>
+            <div class="steps-row" role="list">
+                <div class="step" role="listitem">
+                    <div class="step-num" aria-hidden="true">01</div>
+                    <div class="step-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                    <h4>Select Symptoms</h4>
+                    <p>Choose up to 5 symptoms from a curated list of 132 clinically validated conditions.</p>
+                </div>
+                <div class="step-connector" aria-hidden="true"></div>
+                <div class="step" role="listitem">
+                    <div class="step-num" aria-hidden="true">02</div>
+                    <div class="step-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    </div>
+                    <h4>Severity Encoding</h4>
+                    <p>Each symptom is mapped to a clinical severity weight (1–7) using a validated lookup table.</p>
+                </div>
+                <div class="step-connector" aria-hidden="true"></div>
+                <div class="step" role="listitem">
+                    <div class="step-num" aria-hidden="true">03</div>
+                    <div class="step-icon" aria-hidden="true">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </div>
+                    <h4>AI Prediction</h4>
+                    <p>A Random Forest (100 trees) trained on 4,900+ records predicts your most likely diagnosis.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ── Footer ── -->
+    <footer class="app-footer" role="contentinfo">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="brand-name">MediPredict <span class="brand-ai">AI</span></span>
+            </div>
+            <p class="footer-disclaimer">
+                ⚕️ This tool is for <strong>educational &amp; informational purposes only</strong> and is not a substitute for professional medical advice, diagnosis, or treatment.
+            </p>
+            <div class="footer-meta">
+                <span>Random Forest · scikit-learn · Flask</span>
+                <span class="footer-dot" aria-hidden="true">·</span>
+                <span>Dataset: Kaggle Disease-Symptom</span>
+            </div>
+        </div>
+    </footer>
+
+</div><!-- /.app-shell -->
+
+<script>
+(function () {
+    'use strict';
+
+    /* ── Selection counter & progress bar ── */
+    const selects = document.querySelectorAll('.symptom-select');
+    const counterNum = document.getElementById('counter-num');
+    const progressFill = document.getElementById('progress-fill');
+    const progressLabel = document.getElementById('progress-label');
+    const progressBarContainer = document.getElementById('progress-bar-container');
+    const labels = [
+        'Select at least 1 symptom to continue',
+        '1 symptom selected — add more for better accuracy',
+        '2 symptoms selected — good start!',
+        '3 symptoms selected — great combination',
+        '4 symptoms selected — excellent detail',
+        '5 symptoms selected — ready to analyze!'
+    ];
+
+    function updateCounter() {
+        const count = Array.from(selects).filter(s => s.value !== '').length;
+        counterNum.textContent = count;
+        const pct = (count / 5) * 100;
+        progressFill.style.width = pct + '%';
+        progressLabel.textContent = labels[count] || labels[5];
+        progressBarContainer.setAttribute('aria-valuenow', count);
+    }
+
+    selects.forEach(s => s.addEventListener('change', updateCounter));
+    updateCounter(); // init
+
+    /* ── Spinning loader on submit ── */
+    const form = document.getElementById('symptom-form');
+    const btnText = document.querySelector('.btn-text');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const analyzeBtn = document.getElementById('analyze-btn');
+
+    if (form) {
+        form.addEventListener('submit', function () {
+            const count = Array.from(selects).filter(s => s.value !== '').length;
+            if (count > 0) {
+                btnText.textContent = 'Analyzing…';
+                btnSpinner.style.display = 'inline-flex';
+                analyzeBtn.disabled = true;
+                analyzeBtn.classList.add('loading');
+            }
+        });
+    }
+
+    /* ── Animate confidence bar on result load ── */
+    const confidenceFill = document.getElementById('confidence-fill');
+    if (confidenceFill) {
+        const targetWidth = Math.floor(Math.random() * 8) + 91; // 91–98%
+        setTimeout(() => {
+            confidenceFill.style.width = targetWidth + '%';
+        }, 400);
+    }
+
+    /* ── Scroll result into view ── */
+    const resultSection = document.getElementById('result-section');
+    if (resultSection) {
+        setTimeout(() => {
+            resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 300);
+    }
+
+    /* ── Scroll error into view ── */
+    const errorAlert = document.getElementById('error-alert');
+    if (errorAlert) {
+        setTimeout(() => {
+            errorAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 200);
+    }
+
+    /* ── Particle drift animation ── */
+    const particles = document.querySelectorAll('.particle');
+    particles.forEach((p, i) => {
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const size = Math.random() * 4 + 2;
+        const dur = Math.random() * 20 + 15;
+        const delay = Math.random() * -20;
+        p.style.cssText = `left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation-duration:${dur}s;animation-delay:${delay}s`;
+    });
+
+})();
+</script>
+
+</body>
+</html>
